@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Map + GeoJSON + Tileset (Hover Popup Example)</title>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.9.4/mapbox-gl.css" rel="stylesheet" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.9.4/mapbox-gl.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+      background: linear-gradient(45deg, #FFA69E, #FAF3DD, #B8F2E6);
+    }
+    header {
+      text-align: center;
+      padding: 10px 0 0;
+    }
+    footer {
+      margin-top: 20px;
+      padding-bottom: 10px;
+      text-align: center;
+    }
+    #map {
+      width: 700px;
+      height: 400px;
+      margin: 0 auto;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+      display: block;
+    }
+    #button-container {
+      margin: 20px auto;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      max-width: 700px;
+    }
+    #toggleCircleColor {
+      background-color: #fff;
+      border: none;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-size: 14px;
+      border-radius: 4px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+    #toggleCircleColor:hover {
+      background-color: #eee;
+    }
+    #loveStudyBtn {
+      background-color: #000;
+      color: #fff;
+      font-size: 16px;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 16px;
+      cursor: pointer;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    }
+    #loveStudyBtn:hover {
+      background-color: #333;
+    }
+    #legend {
+      position: absolute;
+      top: 180px;
+      left: 50px;
+      z-index: 10;
+      background: #fff;
+      padding: 10px;
+      border-radius: 4px;
+      font-size: 14px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+      max-width: 180px;
+    }
+    #legend h3 {
+      margin: 0 0 8px;
+      font-size: 15px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .legend-color-box {
+      width: 20px;
+      height: 20px;
+      margin-right: 8px;
+      opacity: 0.8;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>My NOT-CHANGED-A-LOT map for Lab 3 (Basically from Lab 2)</h1>
+    <p>
+      This is a Lab 3 web map using a Previous GeoJSON (<em>My Home</em>)
+      and a vector tileset (<em>As Asked in Instruction</em>).
+      Move your mouse over the blue circle to see a popup! 
+      Also, click the button to toggle circle color (<em>Don't really know if this is EXACTLY a legend?!</em>)
+    </p>
+  </header>
+
+  <div id="map"></div>
+
+  <div id="button-container">
+    <button id="toggleCircleColor">Toggle Circle Color</button>
+    <button id="loveStudyBtn">I LOVE STUDY</button>
+  </div>
+
+  <div id="legend">
+    <h3>Legend</h3>
+    <div class="legend-item">
+      <div class="legend-color-box" style="background-color: blue;"></div>
+      <span>Circle: Normal</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color-box" style="background-color: red;"></div>
+      <span>Circle: Toggled</span>
+    </div>
+    <hr />
+    <div class="legend-item">
+      <div class="legend-color-box" style="background-color: red;"></div>
+      <span>MyBaseMap Fill</span>
+    </div>
+  </div>
+
+  <img
+    src="Pic for Profile.jpg"
+    width="450"
+    style="display: block; margin: 20px auto;"
+    alt="Example Image"
+  />
+
+  <footer>
+    <p>&copy; I was considering a Profile Picture is a Vector stuff...</p>
+  </footer>
+
+  <script>
+    mapboxgl.accessToken = 'pk.eyJ1Ijoic29kYWFhYWFhIiwiYSI6ImNtNW9kN2ljbzBrcG8ybG9tdG90anE3aGgifQ.rSB64rW_H8KCYtatGd1Btg';
+    const map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/sodaaaaaa/cm6zs37p800cd01qqa3b58y78',
+      center: [-79.6533, 43.5899],
+      zoom: 14
+    });
+    const popup = new mapboxgl.Popup({ closeButton: false, closeOnClick: false });
+
+    map.on('load', () => {
+      map.addSource('My Home', {
+        type: 'geojson',
+        data: 'https://raw.githubusercontent.com/sodasodasosoda/Lab-2-GeoJSON/refs/heads/main/My%20Home%20in%20Mississauga.geojson'
+      });
+      map.addSource('MyBaseMap', {
+        type: 'vector',
+        url: 'mapbox://yourusername.yourtilesetid'
+      });
+      map.addLayer({
+        id: 'MyHome-circle-layer',
+        type: 'circle',
+        source: 'My Home',
+        paint: {
+          'circle-radius': 5,
+          'circle-color': 'blue'
+        }
+      });
+      map.addLayer({
+        id: 'MyBaseMap-layer',
+        type: 'fill',
+        source: 'MyBaseMap',
+        'source-layer': 'mytilesetlayer',
+        paint: {
+          'fill-color': 'red',
+          'fill-opacity': 0.4,
+          'fill-outline-color': 'red'
+        }
+      });
+      map.on('mousemove', 'MyHome-circle-layer', (e) => {
+        const features = e.features;
+        if (!features.length) return;
+        popup
+          .setLngLat(e.lngLat)
+          .setHTML('<strong>My Home</strong><br>Hovering over the circle!')
+          .addTo(map);
+      });
+      map.on('mouseleave', 'MyHome-circle-layer', () => {
+        popup.remove();
+      });
+      map.on('mouseenter', 'MyHome-circle-layer', () => {
+        map.getCanvas().style.cursor = 'pointer';
+      });
+      map.on('mouseleave', 'MyHome-circle-layer', () => {
+        map.getCanvas().style.cursor = '';
+      });
+    });
+
+    let isBlue = true;
+    document.getElementById('toggleCircleColor').addEventListener('click', () => {
+      isBlue = !isBlue;
+      map.setPaintProperty(
+        'MyHome-circle-layer',
+        'circle-color',
+        isBlue ? 'blue' : 'red'
+      );
+    });
+
+    document.getElementById('loveStudyBtn').addEventListener('click', () => {
+      window.open('https://www.utoronto.ca/', '_blank');
+    });
+  </script>
+</body>
+</html>
